@@ -1,6 +1,6 @@
 # Mario Game
 
-Welcome to the Mario Game! This classic-style JavaFX game allows you to control Mario and navigate through a simple game environment.
+Welcome to the Minimal Mario Game! This classic-style JavaFX game allows you to control Mario and navigate through a simple game environment.
 
 # Controls
 Use the following controls to navigate Mario through the game:
@@ -21,3 +21,8 @@ Feel free to customize and extend the game according to your preferences. You ca
 
 # License
 This project is licensed under the MIT License.
+
+# Big Thanks to :
+https://github.com/UnLow1/Mario-Game
+
+
