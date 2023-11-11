@@ -1,5 +1,9 @@
 # Mario Game
 
+[![Gameplay Video](thumbnail_image.png)](video.mp4)
+
+# Mario Game
+
 Welcome to the Mario Game! This classic-style JavaFX game allows you to control Mario and navigate through a simple game environment.
 
 # Controls
