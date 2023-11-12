@@ -1,6 +1,5 @@
-
-
 import java.util.ArrayList;
+import java.util.Random;
 
 import javafx.scene.image.Image;
 
@@ -20,7 +19,9 @@ public class Player {
     private int counter;
     private int lvl;
 
-    public Player() {
+    PlayerII playerI;
+
+    public Player(PlayerII playerI) {
         super();
         this.lvl = 0;
         for (int k = 0; k < 5; k++) {
@@ -38,6 +39,7 @@ public class Player {
         this.jumpHeight = 5;
         this.gameOver = false;
         this.counter = 0;
+        this.playerI = playerI;
     }
 
     int getY() {
@@ -141,5 +143,434 @@ public class Player {
         }
     }
 
-    
+    void collision(Enemy enemy) {
+        // collision with point (x + image.width, y + image.height)
+        if (x + imageRight[0].getWidth() >= enemy.getX()
+                && x + imageRight[0].getWidth() <= enemy.getX() + enemy.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= enemy.getY()
+                && y + imageRight[0].getHeight() <= enemy.getY() + enemy.getImage().getHeight()) {
+            killOrBeKilled(enemy);
+        }
+        // collision with point (x, y + image.height)
+        else if (x >= enemy.getX() && x <= enemy.getX() + enemy.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= enemy.getY()
+                && y + imageRight[0].getHeight() <= enemy.getY() + enemy.getImage().getHeight()) {
+            killOrBeKilled(enemy);
+        }
+        // avoid situation when enemy is in player
+        // collision with point (x + image.width / 2, y + image.height)
+        else if (x + imageRight[0].getWidth() / 2 >= enemy.getX()
+                && x + imageRight[0].getWidth() / 2 <= enemy.getX() + enemy.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= enemy.getY()
+                && y + imageRight[0].getHeight() <= enemy.getY() + enemy.getImage().getHeight()) {
+            killOrBeKilled(enemy);
+        }
+    }
+
+    private void killOrBeKilled(Enemy enemy) {
+        if (falling) {
+            enemy.killed();
+            falling = false;
+            jumping = true;
+        } else {
+            if (lvl == 0) {
+
+                imageRight[0] = new Image("file:images/player/marioDead.png");
+                moveLength = 0;
+                floor = 550;
+                jumping = true;
+                gameOver = true;
+                i = 0;
+                playerI.gameOverRestartGame();
+            } else {
+                lvl--;
+                if (enemy.getGoLeft()) {
+                    enemy.setGoLeft(false);
+                } else {
+                    enemy.setGoLeft(true);
+                }
+                for (int k = 0; k < 5; k++) {
+                    imageRight[k] = new Image(("file:images/player/marioRight" + k + "Lvl" + lvl + ".png"));
+                    imageLeft[k] = new Image(("file:images/player/marioLeft" + k + "Lvl" + lvl + ".png"));
+                }
+            }
+
+        }
+    }
+
+    void collision(Box box) {
+        // standing on box
+        // collision with point (x + image.width, y + image.height)
+        if (x + imageRight[0].getWidth() >= box.getX()
+                && x + imageRight[0].getWidth() <= box.getX() + box.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= box.getY()
+                && y + imageRight[0].getHeight() <= box.getY() + box.getImage().getHeight()) {
+            floor = (int) (box.getY() - imageRight[0].getHeight());
+            if (y > floor) // to avoid stacking in box
+                y = floor;
+        }
+        // collision with point (x, y + image.height)
+        else if (x >= box.getX() && x <= box.getX() + box.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= box.getY()
+                && y + imageRight[0].getHeight() <= box.getY() + box.getImage().getHeight()) {
+            floor = (int) (box.getY() - imageRight[0].getHeight());
+            if (y > floor) // to avoid stacking in box
+                y = floor;
+        }
+        // avoid situation when box is in player
+        // collision with point (x + image.width / 2, y + image.height)
+        else if (x + imageRight[0].getWidth() / 2 >= box.getX()
+                && x + imageRight[0].getWidth() / 2 <= box.getX() + box.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= box.getY()
+                && y + imageRight[0].getHeight() <= box.getY() + box.getImage().getHeight()) {
+            floor = (int) (box.getY() - imageRight[0].getHeight());
+            if (y > floor) // to avoid stacking in box
+                y = floor;
+        }
+        // hitting by left or right side
+        // collision with point (x, y + image.height / 2)
+        else if (x >= box.getX() && x <= box.getX() + box.getImage().getWidth()
+                && y + imageRight[0].getHeight() / 2 >= box.getY()
+                && y + imageRight[0].getHeight() / 2 <= box.getY() + box.getImage().getHeight()) {
+            x += moveLength;
+        }
+        // collision with point (x + image.width, y + image.height / 2)
+        else if (x + imageRight[0].getWidth() >= box.getX()
+                && x + imageRight[0].getWidth() <= box.getX() + box.getImage().getWidth()
+                && y + imageRight[0].getHeight() / 2 >= box.getY()
+                && y + imageRight[0].getHeight() / 2 <= box.getY() + box.getImage().getHeight()) {
+            x -= moveLength;
+        }
+        // hitting by head
+        // collision with point (x + image.width, y)
+        else if (x + imageRight[0].getWidth() >= box.getX()
+                && x + imageRight[0].getWidth() <= box.getX() + box.getImage().getWidth() && y >= box.getY()
+                && y <= box.getY() + box.getImage().getHeight()) {
+            checkIfBoxWasHit(box);
+        }
+        // collision with point (x, y)
+        else if (x >= box.getX() && x <= box.getX() + box.getImage().getWidth() && y >= box.getY()
+                && y <= box.getY() + box.getImage().getHeight()) {
+            checkIfBoxWasHit(box);
+        }
+        // collision with point (x + image.width / 2, y)
+        else if (x + imageRight[0].getWidth() / 2 >= box.getX()
+                && x + imageRight[0].getWidth() / 2 <= box.getX() + box.getImage().getWidth() && y >= box.getY()
+                && y <= box.getY() + box.getImage().getHeight()) {
+            checkIfBoxWasHit(box);
+        }
+        // fall to the floor from box
+        if (Math.abs(y - floor) <= 5 && !falling && !jumping && floor != (int) (550 - 85 - imageRight[0].getHeight())) {
+            floor = (int) (550 - 85 - imageRight[0].getHeight());
+            falling = true;
+        }
+    }
+
+    // making BoxCoin or PowerUp
+    private void checkIfBoxWasHit(Box box) {
+        if (Math.abs(y - box.getY() - box.getImage().getHeight()) <= 10 && jumping) {
+            // making BoxCoin or PowerUp above Box
+            if (box.getI() < 46) { // box is hit first time
+                Random rand = new Random();
+                // 20% for PowerUp and 80% for BoxCoin
+                if (rand.nextInt(10) <= 1) {
+                    PowerUp powerUp = new PowerUp(box.getX(), box.getY());
+                    powerUp.setY(powerUp.getY() - (int) powerUp.getImage().getHeight());
+                    box.setPowerUp(powerUp);
+                } else {
+                    
+                    playerI.collisionWithCoin();
+                    BoxCoin boxCoin = new BoxCoin(box.getX() + (int) (box.getImage().getWidth() / 4), box.getY());
+                    boxCoin.setY(boxCoin.getY() - (int) boxCoin.getImage().getHeight());
+                    box.setBoxCoin(boxCoin);
+
+                }
+            }
+            box.setI(47); // image - box was used
+            falling = true;
+            jumping = false;
+        }
+        // avoid head being in box
+        else if (x <= box.getX()) {
+            x -= moveLength;
+        } else
+            x += moveLength;
+    }
+
+    void collision(Wall wall) {
+        // standing on wall
+        // collision with point (x + image.width, y + image.height)
+        if (x + imageRight[0].getWidth() >= wall.getX()
+                && x + imageRight[0].getWidth() <= wall.getX() + wall.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= wall.getY()
+                && y + imageRight[0].getHeight() <= wall.getY() + wall.getImage().getHeight()) {
+            floor = (int) (wall.getY() - imageRight[0].getHeight());
+            if (y > floor) // to avoid stacking in box
+                y = floor;
+        }
+        // collision with point (x, y + image.height)
+        else if (x >= wall.getX() && x <= wall.getX() + wall.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= wall.getY()
+                && y + imageRight[0].getHeight() <= wall.getY() + wall.getImage().getHeight()) {
+            floor = (int) (wall.getY() - imageRight[0].getHeight());
+            if (y > floor) // to avoid stacking in box
+                y = floor;
+        }
+        // avoid situation when wall is in player
+        // collision with point (x + image.width / 2, y + image.height)
+        else if (x + imageRight[0].getWidth() / 2 >= wall.getX()
+                && x + imageRight[0].getWidth() / 2 <= wall.getX() + wall.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= wall.getY()
+                && y + imageRight[0].getHeight() <= wall.getY() + wall.getImage().getHeight()) {
+            floor = (int) (wall.getY() - imageRight[0].getHeight());
+            if (y > floor) // to avoid stacking in box
+                y = floor;
+        }
+        // hitting by left or right side
+        // collision with point (x, y + image.height / 2)
+        else if (x >= wall.getX() && x <= wall.getX() + wall.getImage().getWidth()
+                && y + imageRight[0].getHeight() / 2 >= wall.getY()
+                && y + imageRight[0].getHeight() / 2 <= wall.getY() + wall.getImage().getHeight()) {
+            x += moveLength;
+        }
+        // collision with point (x + image.width, y + image.height / 2)
+        else if (x + imageRight[0].getWidth() >= wall.getX()
+                && x + imageRight[0].getWidth() <= wall.getX() + wall.getImage().getWidth()
+                && y + imageRight[0].getHeight() / 2 >= wall.getY()
+                && y + imageRight[0].getHeight() / 2 <= wall.getY() + wall.getImage().getHeight()) {
+            x -= moveLength;
+        }
+        // hitting by head
+        // collision with point (x + image.width, y)
+        else if (x + imageRight[0].getWidth() >= wall.getX()
+                && x + imageRight[0].getWidth() <= wall.getX() + wall.getImage().getWidth() && y >= wall.getY()
+                && y <= wall.getY() + wall.getImage().getHeight()) {
+            if (jumping) {
+                jumping = false;
+                falling = true;
+                // player with level 0 can't destroy wall
+                if (lvl > 0) {
+                    wall.setX(-50);
+                }
+            }
+            // avoid head being in box
+            else if (x <= wall.getX()) {
+                x -= moveLength;
+            } else
+                x += moveLength;
+        }
+        // collision with point (x, y)
+        else if (x >= wall.getX() && x <= wall.getX() + wall.getImage().getWidth() && y >= wall.getY()
+                && y <= wall.getY() + wall.getImage().getHeight()) {
+            if (jumping) {
+                jumping = false;
+                falling = true;
+                // player with level 0 can't destroy wall
+                if (lvl > 0) {
+                    wall.setX(-50);
+                }
+            }
+            // avoid head being in box
+            else if (x <= wall.getX()) {
+                x -= moveLength;
+            } else
+                x += moveLength;
+        }
+        // collision with point (x + image.width / 2, y)
+        else if (x + imageRight[0].getWidth() / 2 >= wall.getX()
+                && x + imageRight[0].getWidth() / 2 <= wall.getX() + wall.getImage().getWidth() && y >= wall.getY()
+                && y <= wall.getY() + wall.getImage().getHeight()) {
+            if (jumping) {
+                jumping = false;
+                falling = true;
+                // player with level 0 can't destroy wall
+                if (lvl > 0) {
+                    wall.setX(-50);
+                }
+            }
+            // avoid head being in box
+            else if (x <= wall.getX()) {
+                x -= moveLength;
+            } else
+                x += moveLength;
+        }
+        // fall to the floor from box
+        if (Math.abs(y - floor) <= 5 && !falling && !jumping && floor != (int) (550 - 85 - imageRight[0].getHeight())) {
+            floor = (int) (550 - 85 - imageRight[0].getHeight());
+            falling = true;
+        }
+    }
+
+    void collision(Pipe pipe) {
+        // hitting by body
+        // collision with point (x + image.width, y + image.height)
+        if (x + imageRight[0].getWidth() >= pipe.getX()
+                && x + imageRight[0].getWidth() <= pipe.getX() + pipe.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= pipe.getY()
+                && y + imageRight[0].getHeight() <= pipe.getY() + pipe.getImage().getHeight()) {
+            // player standing on pipe
+            if (Math.abs(y + imageRight[0].getHeight() - pipe.getY()) <= 10) {
+                floor = (int) (pipe.getY() - imageRight[0].getHeight());
+                y = floor; // to avoid stacking in pipe
+            } else {
+                x -= moveLength; // player is blocked by pipe
+                if (i == 50) // setting good image (image doesn't change)
+                    j--;
+                else
+                    i--;
+            }
+        }
+        // collision with point (x, y + image.height)
+        else if (x >= pipe.getX() && x <= pipe.getX() + pipe.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= pipe.getY()
+                && y + imageRight[0].getHeight() <= pipe.getY() + pipe.getImage().getHeight()) {
+            // player standing on pipe
+            if (Math.abs(y + imageRight[0].getHeight() - pipe.getY()) <= 15) {
+                floor = (int) (pipe.getY() - imageRight[0].getHeight());
+                y = floor; // to avoid stacking in pipe
+            } else {
+                x += moveLength; // player is blocked by pipe
+                if (i == 50) // setting good image (image doesn't change)
+                    j--;
+                else
+                    i--;
+            }
+        }
+        // fall to the floor from box
+        if (Math.abs(y - floor) <= 5 && !falling && !jumping && floor != (int) (550 - 85 - imageRight[0].getHeight())) {
+            floor = (int) (550 - 85 - imageRight[0].getHeight());
+            falling = true;
+        }
+    }
+
+    void collision(Coin coin) {
+
+        // collision with point (x + image.width, y + image.height)
+        if (x + imageRight[0].getWidth() >= coin.getX()
+                && x + imageRight[0].getWidth() <= coin.getX() + coin.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= coin.getY()
+                && y + imageRight[0].getHeight() <= coin.getY() + coin.getImage().getHeight()) {
+            coin.setX(-50);
+            playerI.collisionWithCoin();
+        }
+        // collision with point (x, y + image.height)
+        else if (x >= coin.getX() && x <= coin.getX() + coin.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= coin.getY()
+                && y + imageRight[0].getHeight() <= coin.getY() + coin.getImage().getHeight()) {
+            coin.setX(-50);
+            playerI.collisionWithCoin();
+        }
+        // collision with point (x + image.width / 2, y + image.height)
+        else if (x + imageRight[0].getWidth() / 2 >= coin.getX()
+                && x + imageRight[0].getWidth() / 2 <= coin.getX() + coin.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= coin.getY()
+                && y + imageRight[0].getHeight() <= coin.getY() + coin.getImage().getHeight()) {
+            coin.setX(-50);
+            playerI.collisionWithCoin();
+        }
+        // collision with point (x + image.width, y)
+        else if (x + imageRight[0].getWidth() >= coin.getX()
+                && x + imageRight[0].getWidth() <= coin.getX() + coin.getImage().getWidth() && y >= coin.getY()
+                && y <= coin.getY() + coin.getImage().getHeight()) {
+            coin.setX(-50);
+            playerI.collisionWithCoin();
+        }
+        // collision with point (x, y)
+        else if (x >= coin.getX() && x <= coin.getX() + coin.getImage().getWidth() && y >= coin.getY()
+                && y <= coin.getY() + coin.getImage().getHeight()) {
+            coin.setX(-50);
+            playerI.collisionWithCoin();
+        }
+        // collision with point (x + image.width / 2, y)
+        else if (x + imageRight[0].getWidth() / 2 >= coin.getX()
+                && x + imageRight[0].getWidth() / 2 <= coin.getX() + coin.getImage().getWidth() && y >= coin.getY()
+                && y <= coin.getY() + coin.getImage().getHeight()) {
+            coin.setX(-50);
+            playerI.collisionWithCoin();
+        }
+        // collision with point (x, y + image.height / 2)
+        else if (x >= coin.getX() && x <= coin.getX() + coin.getImage().getWidth()
+                && y + imageRight[0].getHeight() / 2 >= coin.getY()
+                && y + imageRight[0].getHeight() / 2 <= coin.getY() + coin.getImage().getHeight()) {
+            coin.setX(-50);
+            playerI.collisionWithCoin();
+        }
+        // collision with point (x + image.width, y + image.height / 2)
+        else if (x + imageRight[0].getWidth() >= coin.getX()
+                && x + imageRight[0].getWidth() <= coin.getX() + coin.getImage().getWidth()
+                && y + imageRight[0].getHeight() / 2 >= coin.getY()
+                && y + imageRight[0].getHeight() / 2 <= coin.getY() + coin.getImage().getHeight()) {
+            coin.setX(-50);
+            playerI.collisionWithCoin();
+        }
+    }
+
+    void collision(PowerUp powerUp) {
+        // collision with point (x + image.width, y + image.height)
+        if (x + imageRight[0].getWidth() >= powerUp.getX()
+                && x + imageRight[0].getWidth() <= powerUp.getX() + powerUp.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= powerUp.getY()
+                && y + imageRight[0].getHeight() <= powerUp.getY() + powerUp.getImage().getHeight()) {
+            afterCollisionWithPowerUp(powerUp);
+        }
+        // collision with point (x, y + image.height)
+        else if (x >= powerUp.getX() && x <= powerUp.getX() + powerUp.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= powerUp.getY()
+                && y + imageRight[0].getHeight() <= powerUp.getY() + powerUp.getImage().getHeight()) {
+            afterCollisionWithPowerUp(powerUp);
+        }
+        // collision with point (x + image.width / 2, y + image.height)
+        else if (x + imageRight[0].getWidth() / 2 >= powerUp.getX()
+                && x + imageRight[0].getWidth() / 2 <= powerUp.getX() + powerUp.getImage().getWidth()
+                && y + imageRight[0].getHeight() >= powerUp.getY()
+                && y + imageRight[0].getHeight() <= powerUp.getY() + powerUp.getImage().getHeight()) {
+            afterCollisionWithPowerUp(powerUp);
+        }
+        // collision with point (x + image.width, y)
+        else if (x + imageRight[0].getWidth() >= powerUp.getX()
+                && x + imageRight[0].getWidth() <= powerUp.getX() + powerUp.getImage().getWidth() && y >= powerUp.getY()
+                && y <= powerUp.getY() + powerUp.getImage().getHeight()) {
+            afterCollisionWithPowerUp(powerUp);
+        }
+        // collision with point (x, y)
+        else if (x >= powerUp.getX() && x <= powerUp.getX() + powerUp.getImage().getWidth() && y >= powerUp.getY()
+                && y <= powerUp.getY() + powerUp.getImage().getHeight()) {
+            afterCollisionWithPowerUp(powerUp);
+        }
+        // collision with point (x + image.width / 2, y)
+        else if (x + imageRight[0].getWidth() / 2 >= powerUp.getX()
+                && x + imageRight[0].getWidth() / 2 <= powerUp.getX() + powerUp.getImage().getWidth()
+                && y >= powerUp.getY() && y <= powerUp.getY() + powerUp.getImage().getHeight()) {
+            afterCollisionWithPowerUp(powerUp);
+        }
+        // collision with point (x, y + image.height / 2)
+        else if (x >= powerUp.getX() && x <= powerUp.getX() + powerUp.getImage().getWidth()
+                && y + imageRight[0].getHeight() / 2 >= powerUp.getY()
+                && y + imageRight[0].getHeight() / 2 <= powerUp.getY() + powerUp.getImage().getHeight()) {
+            afterCollisionWithPowerUp(powerUp);
+        }
+        // collision with point (x + image.width, y + image.height / 2)
+        else if (x + imageRight[0].getWidth() >= powerUp.getX()
+                && x + imageRight[0].getWidth() <= powerUp.getX() + powerUp.getImage().getWidth()
+                && y + imageRight[0].getHeight() / 2 >= powerUp.getY()
+                && y + imageRight[0].getHeight() / 2 <= powerUp.getY() + powerUp.getImage().getHeight()) {
+            afterCollisionWithPowerUp(powerUp);
+        }
+    }
+
+    private void afterCollisionWithPowerUp(PowerUp powerUp) {
+        powerUp.setX(-50);
+        powerUp.setMoveLength(0);
+        if (lvl < 2) {
+            lvl++;
+            for (int k = 0; k < 5; k++) {
+                imageRight[k] = new Image(("file:images/player/marioRight" + k + "Lvl" + lvl + ".png"));
+                imageLeft[k] = new Image(("file:images/player/marioLeft" + k + "Lvl" + lvl + ".png"));
+            }
+            floor = (int) (550 - 85 - imageRight[0].getHeight());
+            if (y > floor)
+                y = floor;
+        }
+    }
+
 }
